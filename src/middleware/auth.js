@@ -88,6 +88,26 @@ export const protect = async (req, res, next) => {
   }
 };
 
+// Middleware to allow only admin users
+export const adminOnly = (req, res, next) => {
+  if (!req.admin) {
+    return res.status(401).json({
+      status: 'error',
+      message: 'Not authorized - login required'
+    });
+  }
+
+  // Check if user is an admin
+  if (req.admin.role !== 'admin' && req.admin.role !== 'super_admin') {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Not authorized - admin access required'
+    });
+  }
+
+  next();
+};
+
 // Check for specific permissions
 export const authorize = (...permissions) => {
   return (req, res, next) => {

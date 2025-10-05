@@ -7,9 +7,9 @@ import {
   AboutDetails,
   HomeDetails,
   SocialLinks,
-  PropertyDetails,
-  Review
+  PropertyDetails
 } from '../models/Content.js';
+import Review from '../models/Review.js';
 
 // Dashboard Statistics
 export const getDashboardStats = async (req, res, next) => {

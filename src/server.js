@@ -18,6 +18,9 @@ import galleryRoutes from './routes/gallery.js';
 import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
+import reviewRoutes from './routes/reviews.js';
+import analyticsRoutes from './routes/analytics.js';
+import settingsRoutes from './routes/settings.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -33,15 +36,21 @@ connectDB();
 const app = express();
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // CORS configuration
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
-    'http://localhost:5174'
+    'http://localhost:5174',
+    'http://localhost:3000'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
 // Rate limiting
@@ -88,6 +97,18 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/gallery', galleryRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/settings', settingsRoutes);
+
+// Test route for uploads
+app.get('/test-uploads', (req, res) => {
+  res.json({
+    message: 'Uploads route is working',
+    uploadsPath: uploadsPath,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Handle undefined API routes
 app.all('/api/*', (req, res) => {
@@ -99,6 +120,27 @@ app.all('/api/*', (req, res) => {
 
 // Serve static files from the React app
 const staticPath = path.join(rootDir, 'dist');
+const uploadsPath = path.join(rootDir, 'uploads');
+
+// Serve uploads with proper CORS headers
+app.use('/uploads', (req, res, next) => {
+  // Set CORS headers for all upload requests
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+  
+  next();
+}, express.static(uploadsPath, {
+  maxAge: '1d',
+  etag: true
+}));
 
 // Serve static files
 app.use(express.static(staticPath, {

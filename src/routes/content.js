@@ -5,8 +5,6 @@ import {
   getHomeDetails,
   getSocialLinks,
   getPropertyDetails,
-  getReviews,
-  getReview,
   updateContactDetails,
   updateAboutDetails,
   updateHomeDetails,
@@ -21,8 +19,6 @@ router.get('/about-details', getAboutDetails);
 router.get('/home-details', getHomeDetails);
 router.get('/social-links', getSocialLinks);
 router.get('/property-details', getPropertyDetails);
-router.get('/reviews', getReviews);
-router.get('/reviews/:id', getReview);
 
 // Admin routes (would need authentication middleware in production)
 router.post('/contact-details', updateContactDetails);

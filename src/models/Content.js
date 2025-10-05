@@ -231,70 +231,9 @@ const propertyDetailsSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Reviews Schema (equivalent to reviews_detail table)
-const reviewSchema = new mongoose.Schema({
-  clientName: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  eventType: {
-    type: String,
-    required: true,
-    trim: true,
-    enum: ['wedding', 'corporate', 'birthday', 'anniversary', 'other']
-  },
-  eventDate: {
-    type: Date,
-    required: true
-  },
-  rating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  review: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  isApproved: {
-    type: Boolean,
-    default: false
-  },
-  isFeatured: {
-    type: Boolean,
-    default: false
-  },
-  clientEmail: {
-    type: String,
-    trim: true,
-    lowercase: true
-  },
-  photos: [{
-    url: {
-      type: String,
-      required: true
-    },
-    alt: {
-      type: String,
-      trim: true
-    }
-  }]
-}, {
-  timestamps: true
-});
-
-// Create models
-export const ContactDetails = mongoose.model('ContactDetails', contactDetailsSchema);
-export const AboutDetails = mongoose.model('AboutDetails', aboutDetailsSchema);
-export const HomeDetails = mongoose.model('HomeDetails', homeDetailsSchema);
-export const SocialLinks = mongoose.model('SocialLinks', socialLinksSchema);
-export const PropertyDetails = mongoose.model('PropertyDetails', propertyDetailsSchema);
-export const Review = mongoose.model('Review', reviewSchema);
+// Create models with overwrite protection
+export const ContactDetails = mongoose.models.ContactDetails || mongoose.model('ContactDetails', contactDetailsSchema);
+export const AboutDetails = mongoose.models.AboutDetails || mongoose.model('AboutDetails', aboutDetailsSchema);
+export const HomeDetails = mongoose.models.HomeDetails || mongoose.model('HomeDetails', homeDetailsSchema);
+export const SocialLinks = mongoose.models.SocialLinks || mongoose.model('SocialLinks', socialLinksSchema);
+export const PropertyDetails = mongoose.models.PropertyDetails || mongoose.model('PropertyDetails', propertyDetailsSchema);

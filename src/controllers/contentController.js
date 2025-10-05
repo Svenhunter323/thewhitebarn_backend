@@ -3,8 +3,7 @@ import {
   AboutDetails,
   HomeDetails,
   SocialLinks,
-  PropertyDetails,
-  Review
+  PropertyDetails
 } from '../models/Content.js';
 
 // @desc    Get contact details
@@ -115,72 +114,6 @@ export const getPropertyDetails = async (req, res, next) => {
   }
 };
 
-// @desc    Get reviews
-// @route   GET /api/content/reviews
-// @access  Public
-export const getReviews = async (req, res, next) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const featured = req.query.featured === 'true';
-    const skip = (page - 1) * limit;
-
-    // Build query
-    const query = { isApproved: true };
-    if (featured) {
-      query.isFeatured = true;
-    }
-
-    const reviews = await Review.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .select('-clientEmail'); // Exclude email for privacy
-
-    const total = await Review.countDocuments(query);
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        reviews,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit)
-        }
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get single review
-// @route   GET /api/content/reviews/:id
-// @access  Public
-export const getReview = async (req, res, next) => {
-  try {
-    const review = await Review.findOne({
-      _id: req.params.id,
-      isApproved: true
-    }).select('-clientEmail');
-
-    if (!review) {
-      return res.status(404).json({
-        status: 'error',
-        message: 'Review not found'
-      });
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: { review }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
 // @desc    Create/Update contact details (admin only)
 // @route   POST /api/content/contact-details
