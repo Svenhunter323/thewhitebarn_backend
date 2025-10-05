@@ -42,20 +42,56 @@ app.use(helmet({
 
 //  Example CSP via helmet (uncomment if embedding YouTube):
 // Add/override CSP to permit YouTube embeds
+
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
-      // allow scripts that YouTube may load
-      scriptSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"],
-      // frames (iframes) - allow youtube domains
-      frameSrc: ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
-      // images used by the player
-      imgSrc: ["'self'", "https://i.ytimg.com", "data:"],
-      // allow XHR/fetch that player might use
-      connectSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      objectSrc: ["'none'"]
+      // allow script sources used by youtube/ads/analytics
+      scriptSrc: [
+        "'self'",
+        "https://www.youtube.com",
+        "https://s.ytimg.com",
+        "https://www.googletagmanager.com",
+        "https://www.google-analytics.com",
+        "https://pagead2.googlesyndication.com",
+        "https://googleads.g.doubleclick.net"
+      ],
+      // styles (allow Google Fonts CSS)
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",                // if required by inline styles
+        "https://fonts.googleapis.com"
+      ],
+      // allow iframes from youtube
+      frameSrc: [
+        "'self'",
+        "https://www.youtube.com",
+        "https://www.youtube-nocookie.com"
+      ],
+      // images used by player and analytics
+      imgSrc: [
+        "'self'",
+        "https://i.ytimg.com",
+        "https://www.google-analytics.com",
+        "data:"
+      ],
+      // font files
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com",
+        "data:"
+      ],
+      connectSrc: [
+        "'self'",
+        "https://www.youtube.com",
+        "https://s.ytimg.com",
+        "https://www.google-analytics.com",
+        "https://googleads.g.doubleclick.net",
+        "https://jnn-pa.googleapis.com"
+      ],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
     }
   })
 );
