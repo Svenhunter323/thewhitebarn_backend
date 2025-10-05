@@ -41,14 +41,21 @@ app.use(helmet({
 }));
 
 //  Example CSP via helmet (uncomment if embedding YouTube):
+// Add/override CSP to permit YouTube embeds
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
       defaultSrc: ["'self'"],
+      // allow scripts that YouTube may load
       scriptSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"],
-      frameSrc: ["https://www.youtube.com", "https://www.youtube-nocookie.com"],
+      // frames (iframes) - allow youtube domains
+      frameSrc: ["'self'", "https://www.youtube.com", "https://www.youtube-nocookie.com"],
+      // images used by the player
       imgSrc: ["'self'", "https://i.ytimg.com", "data:"],
-      connectSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"]
+      // allow XHR/fetch that player might use
+      connectSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      objectSrc: ["'none'"]
     }
   })
 );
