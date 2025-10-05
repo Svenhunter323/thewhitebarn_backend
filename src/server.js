@@ -40,6 +40,19 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
+//  Example CSP via helmet (uncomment if embedding YouTube):
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"],
+      frameSrc: ["https://www.youtube.com", "https://www.youtube-nocookie.com"],
+      imgSrc: ["'self'", "https://i.ytimg.com", "data:"],
+      connectSrc: ["'self'", "https://www.youtube.com", "https://s.ytimg.com"]
+    }
+  })
+);
+
 // CORS configuration
 app.use(cors({
   origin: [
