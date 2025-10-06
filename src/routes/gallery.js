@@ -1,6 +1,14 @@
 import express from 'express';
 import Gallery from '../models/Gallery.js';
 import asyncHandler from 'express-async-handler';
+import {
+  getAllGalleryImages,
+  updateGalleryImage,
+  deleteGalleryImage,
+  updateGalleryOrder,
+  bulkUpdateGalleryImages
+} from '../controllers/galleryController.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -45,6 +53,21 @@ router.get('/categories', asyncHandler(async (req, res) => {
     data: categories
   });
 }));
+
+// =============================================================================
+// ADMIN ROUTES - Must come BEFORE parameterized routes like /:id
+// =============================================================================
+
+// Admin gallery management
+router.get('/admin', protect, adminOnly, getAllGalleryImages);
+router.put('/admin/order', protect, adminOnly, updateGalleryOrder);
+router.patch('/admin/bulk', protect, adminOnly, bulkUpdateGalleryImages);
+router.put('/admin/:id', protect, adminOnly, updateGalleryImage);
+router.delete('/admin/:id', protect, adminOnly, deleteGalleryImage);
+
+// =============================================================================
+// PARAMETERIZED ROUTES - Must come AFTER specific routes
+// =============================================================================
 
 // @desc    Get single gallery image
 // @route   GET /api/gallery/:id

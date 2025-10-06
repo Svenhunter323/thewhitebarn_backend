@@ -1,22 +1,15 @@
 import express from 'express';
 import {
   submitContactForm,
-  getContactSubmissions,
-  getContactSubmission,
-  updateContactStatus,
-  deleteContactSubmission,
   validateContactForm
 } from '../controllers/contactController.js';
 
 const router = express.Router();
 
-// Public routes
+// Public routes only - admin contact management is handled by /api/admin/contacts
 router.post('/', validateContactForm, submitContactForm);
 
-// Admin routes (would need authentication middleware in production)
-router.get('/', getContactSubmissions);
-router.get('/:id', getContactSubmission);
-router.put('/:id', updateContactStatus);
-router.delete('/:id', deleteContactSubmission);
+// NOTE: Admin contact management routes are in /api/admin/contacts
+// This keeps public contact routes separate from admin functionality
 
 export default router;

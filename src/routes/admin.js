@@ -4,18 +4,7 @@ import {
   getAllAdmins,
   updateAdminStatus,
   deleteAdmin,
-  updateContactDetails,
-  updateAboutDetails,
-  updateHomeDetails,
-  updatePropertyDetails,
-  updateSocialLinks,
-  getAllReviews,
-  updateReviewStatus,
-  deleteReview,
-  getAllGalleryImages,
-  updateGalleryImage,
-  deleteGalleryImage,
-  updateGalleryOrder
+  updateSocialLinks
 } from '../controllers/adminController.js';
 import {
   getContactSubmissions,
@@ -23,7 +12,10 @@ import {
   updateContactStatus,
   deleteContactSubmission
 } from '../controllers/contactController.js';
-import { protect, restrictTo, authorize } from '../middleware/auth.js';
+// NOTE: Review and Gallery admin functions are handled by their respective route files
+// /api/reviews/admin/* for review management
+// /api/gallery/admin/* for gallery management (to be created)
+import { protect, restrictTo } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -34,32 +26,27 @@ router.use(protect);
 router.get('/dashboard/stats', getDashboardStats);
 
 // Admin Management (Super Admin only)
-router.get('/admins', restrictTo('super_admin'), getAllAdmins);
-router.put('/admins/:id/status', restrictTo('super_admin'), updateAdminStatus);
-router.delete('/admins/:id', restrictTo('super_admin'), deleteAdmin);
+router.route('/admins')
+  .get(restrictTo('super_admin'), getAllAdmins);
+
+router.route('/admins/:id')
+  .put(restrictTo('super_admin'), updateAdminStatus)
+  .delete(restrictTo('super_admin'), deleteAdmin);
 
 // Contact Management
-router.get('/contacts', getContactSubmissions);
-router.get('/contacts/:id', getContactSubmission);
-router.put('/contacts/:id', updateContactStatus);
-router.delete('/contacts/:id', deleteContactSubmission);
+router.route('/contacts')
+  .get(getContactSubmissions);
 
-// Content Management
-router.put('/content/contact-details', updateContactDetails);
-router.put('/content/about-details', updateAboutDetails);
-router.put('/content/home-details', updateHomeDetails);
-router.put('/content/property-details', updatePropertyDetails);
-router.put('/content/social-links', updateSocialLinks);
+router.route('/contacts/:id')
+  .get(getContactSubmission)
+  .put(updateContactStatus)
+  .delete(deleteContactSubmission);
 
-// Review Management
-router.get('/reviews', getAllReviews);
-router.put('/reviews/:id', updateReviewStatus);
-router.delete('/reviews/:id', deleteReview);
+// Social Links Management
+router.put('/social-links', updateSocialLinks);
 
-// Gallery Management
-router.get('/gallery', getAllGalleryImages);
-router.put('/gallery/:id', updateGalleryImage);
-router.delete('/gallery/:id', deleteGalleryImage);
-router.put('/gallery/order', updateGalleryOrder);
+// NOTE: Review management moved to /api/reviews/admin/*
+// NOTE: Gallery management moved to /api/gallery/admin/*
+// This keeps admin routes focused on core admin operations only
 
 export default router;
