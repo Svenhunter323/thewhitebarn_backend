@@ -10,7 +10,9 @@ import {
   getContactSubmissions,
   getContactSubmission,
   updateContactStatus,
-  deleteContactSubmission
+  deleteContactSubmission,
+  getContactsByPartner,
+  updateContactLeadStatus
 } from '../controllers/contactController.js';
 // NOTE: Review and Gallery admin functions are handled by their respective route files
 // /api/reviews/admin/* for review management
@@ -41,6 +43,10 @@ router.route('/contacts/:id')
   .get(getContactSubmission)
   .put(updateContactStatus)
   .delete(deleteContactSubmission);
+
+// Partner-specific contact routes
+router.get('/contacts/by-partner', getContactsByPartner);
+router.put('/contacts/:id/status', updateContactLeadStatus);
 
 // Social Links Management
 router.put('/social-links', updateSocialLinks);

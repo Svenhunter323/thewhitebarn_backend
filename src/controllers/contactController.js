@@ -1,5 +1,6 @@
 import { body, validationResult } from 'express-validator';
 import Contact from '../models/Contact.js';
+import Partner from '../models/Partner.js';
 import { sendContactEmail, sendAutoReplyEmail } from '../utils/email.js';
 
 // Validation rules for contact form
@@ -30,7 +31,37 @@ export const validateContactForm = [
   body('message')
     .trim()
     .isLength({ min: 10, max: 1000 })
-    .withMessage('Message must be between 10 and 1000 characters')
+    .withMessage('Message must be between 10 and 1000 characters'),
+  
+  // Optional referral tracking fields
+  body('eventType')
+    .optional()
+    .isIn(['wedding', 'corporate', 'shower', 'family', 'other'])
+    .withMessage('Invalid event type'),
+  
+  body('refCode')
+    .optional()
+    .trim()
+    .matches(/^TWBFL-[A-Z0-9]{4,10}$/)
+    .withMessage('Invalid referral code format'),
+  
+  body('utmSource')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('UTM source too long'),
+  
+  body('utmMedium')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('UTM medium too long'),
+  
+  body('utmCampaign')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('UTM campaign too long')
 ];
 
 // @desc    Submit contact form
@@ -48,15 +79,62 @@ export const submitContactForm = async (req, res, next) => {
       });
     }
 
-    const { name, email, phone, address, message } = req.body;
+    const { 
+      name, 
+      email, 
+      phone, 
+      address, 
+      message,
+      eventType,
+      eventDate,
+      guestCount,
+      budget,
+      refCode,
+      utmSource,
+      utmMedium,
+      utmCampaign,
+      utmContent,
+      utmTerm
+    } = req.body;
 
-    // Create contact record
+    // Determine referral source if refCode is provided
+    let refSource = null;
+    if (refCode) {
+      try {
+        const partner = await Partner.findByCode(refCode);
+        if (partner) {
+          refSource = partner.type;
+          // Update partner stats
+          await partner.updateStats('lead');
+        }
+      } catch (error) {
+        console.error('Error looking up partner:', error);
+        // Continue with contact creation even if partner lookup fails
+      }
+    }
+
+    // Create contact record with referral tracking
     const contactData = {
       name,
       email,
       phone,
       address,
       message,
+      eventType: eventType || 'other',
+      eventDate: eventDate ? new Date(eventDate) : null,
+      guestCount: guestCount ? parseInt(guestCount) : null,
+      budget: budget || 'not-specified',
+      // Referral tracking fields
+      refSource,
+      refCode: refCode ? refCode.toUpperCase() : null,
+      utm: {
+        source: utmSource || null,
+        medium: utmMedium || null,
+        campaign: utmCampaign || null,
+        content: utmContent || null,
+        term: utmTerm || null
+      },
+      // Technical fields
       ipAddress: req.ip || req.connection.remoteAddress,
       userAgent: req.get('User-Agent')
     };
@@ -209,6 +287,136 @@ export const deleteContactSubmission = async (req, res, next) => {
     res.status(200).json({
       status: 'success',
       message: 'Contact submission deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get contacts by partner code (admin only)
+// @route   GET /api/admin/contacts/by-partner
+// @access  Private
+export const getContactsByPartner = async (req, res, next) => {
+  try {
+    const { code } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    if (!code) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Partner code is required'
+      });
+    }
+
+    // Verify partner exists
+    const partner = await Partner.findByCode(code);
+    if (!partner) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Partner not found'
+      });
+    }
+
+    // Build query for contacts with this referral code
+    const query = { refCode: code.toUpperCase() };
+
+    // Get contacts with pagination
+    const contacts = await Contact.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-ipAddress -userAgent'); // Exclude sensitive fields
+
+    const total = await Contact.countDocuments(query);
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        partner: {
+          code: partner.code,
+          name: partner.name,
+          type: partner.type
+        },
+        contacts,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit)
+        }
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update contact tour/booking status (admin only)
+// @route   PUT /api/contact/:id/status
+// @access  Private
+export const updateContactLeadStatus = async (req, res, next) => {
+  try {
+    const { tourScheduled, tourDate, booked, bookingDate, bookingAmount } = req.body;
+    
+    const contact = await Contact.findById(req.params.id);
+    
+    if (!contact) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Contact submission not found'
+      });
+    }
+
+    // Update tour status
+    if (tourScheduled !== undefined) {
+      contact.tourScheduled = tourScheduled;
+      if (tourDate) {
+        contact.tourDate = new Date(tourDate);
+      }
+      
+      // Update partner stats if this is a new tour
+      if (tourScheduled && !contact.tourScheduled && contact.refCode) {
+        try {
+          const partner = await Partner.findByCode(contact.refCode);
+          if (partner) {
+            await partner.updateStats('tour');
+          }
+        } catch (error) {
+          console.error('Error updating partner tour stats:', error);
+        }
+      }
+    }
+
+    // Update booking status
+    if (booked !== undefined) {
+      contact.booked = booked;
+      if (bookingDate) {
+        contact.bookingDate = new Date(bookingDate);
+      }
+      if (bookingAmount) {
+        contact.bookingAmount = parseFloat(bookingAmount);
+      }
+      
+      // Update partner stats if this is a new booking
+      if (booked && !contact.booked && contact.refCode) {
+        try {
+          const partner = await Partner.findByCode(contact.refCode);
+          if (partner) {
+            await partner.updateStats('booking');
+          }
+        } catch (error) {
+          console.error('Error updating partner booking stats:', error);
+        }
+      }
+    }
+
+    await contact.save();
+
+    res.status(200).json({
+      status: 'success',
+      data: { contact }
     });
   } catch (error) {
     next(error);

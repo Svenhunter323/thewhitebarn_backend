@@ -21,6 +21,7 @@ import uploadRoutes from './routes/upload.js';
 import reviewRoutes from './routes/reviews.js';
 import analyticsRoutes from './routes/analytics.js';
 import settingsRoutes from './routes/settings.js';
+import partnerRoutes from './routes/partners.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -156,6 +157,7 @@ app.use('/api/gallery', galleryRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/partners', partnerRoutes);
 
 // Test route for uploads
 app.get('/test-uploads', (req, res) => {
