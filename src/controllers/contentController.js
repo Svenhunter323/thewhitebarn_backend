@@ -22,7 +22,7 @@ export const getContactDetails = async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      data: { contactDetails }
+      data: contactDetails
     });
   } catch (error) {
     next(error);
